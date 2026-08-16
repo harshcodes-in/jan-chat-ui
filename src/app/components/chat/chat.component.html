@@ -1,0 +1,178 @@
+<div class="chat-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.open]="showHistory">
+    <div class="sidebar-header">
+      <h1 class="app-title">Jan Chat</h1>
+      <button class="close-sidebar-btn" (click)="toggleHistory()" aria-label="Close sidebar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <button class="new-chat-btn" (click)="newChat()">
+      <span class="material-symbols-outlined icon">add</span>
+      <span>New Chat</span>
+    </button>
+
+    <div class="conversations-list">
+      <h2 class="conversations-title">Conversations</h2>
+      <div class="conversations-scroll">
+        <div 
+          *ngFor="let conv of conversations; trackBy: trackByConversationId" 
+          class="conversation-item"
+          [class.active]="conv.id === currentConversationId"
+          (click)="loadConversation(conv.id)">
+          <div class="conversation-content">
+            <div class="conversation-title">{{ conv.title }}</div>
+            <div class="conversation-date">{{ getFormattedDate(conv.updatedAt) }}</div>
+          </div>
+          <button 
+            class="delete-conv-btn" 
+            (click)="deleteConversation(conv.id, $event)"
+            aria-label="Delete conversation">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+        <div *ngIf="conversations.length === 0" class="empty-state">
+          No conversations yet. Start a new chat!
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="connection-status">
+        <span class="status-dot" [class]="(connectionStatus$ | async) || 'disconnected'"></span>
+        <span class="status-text">{{ getRequestStatusLabel((requestStatus$ | async), (connectionStatus$ | async)) }}</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main chat area -->
+  <main class="chat-main">
+    <!-- Header -->
+    <header class="chat-header">
+      <div class="header-left">
+        <button class="menu-btn" (click)="toggleHistory()" aria-label="Toggle sidebar">
+          <span class="material-symbols-outlined menu-icon">menu</span>
+        </button>
+        <div class="model-selector">
+          <select [ngModel]="selectedModelId" (ngModelChange)="onModelChange($event)" class="model-select">
+            <option value="">Select a model</option>
+            <option *ngFor="let model of models" [value]="model.id">
+              {{ model.name || model.id }}
+            </option>
+          </select>
+          <span class="model-info" *ngIf="currentModel">
+            {{ currentModel.ctx_len ? currentModel.ctx_len + ' ctx' : '' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button 
+          class="settings-btn" 
+          (click)="toggleSettings()"
+          [class.active]="showSettings"
+          aria-label="Settings">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Settings Panel -->
+    <div *ngIf="showSettings" class="settings-overlay" (click)="closeSettings()">
+      <div class="settings-panel-container" (click)="$event.stopPropagation()">
+        <app-settings-panel 
+          [settings]="settings"
+          (settingsChange)="onSettingsChange($event)"
+          (closeSettings)="closeSettings()">
+        </app-settings-panel>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="messages-container" #messagesContainer (scroll)="onMessagesScroll()">
+      <div class="messages-wrapper">
+        <!-- Empty state -->
+        <div *ngIf="messages.length === 0" class="empty-message">
+          <div class="empty-icon material-symbols-outlined">chat_bubble</div>
+          <h2>Start a conversation</h2>
+          <p>Select a model and send your first message</p>
+        </div>
+
+        <!-- Messages list -->
+        <app-message 
+          *ngFor="let message of messages; trackBy: trackByMessageId; let i = index"
+          [message]="message"
+          (editMessage)="onEditMessage($event, i)"
+          (regenerate)="onRegenerateResponse(i)"
+          (deleteMessage)="onDeleteMessage(i)">
+        </app-message>
+
+        <!-- Loading indicator -->
+        <div *ngIf="(generating$ | async)" class="loading-indicator">
+          <div class="status-pill">
+            <span class="status-dot live"></span>
+            <span>Generating response…</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <div class="input-container">
+        <div class="input-wrapper">
+          <div class="attachment-preview" *ngIf="attachedImages.length > 0">
+            <div class="attached-image" *ngFor="let image of attachedImages; let i = index">
+              <img [src]="image" alt="Selected attachment" />
+              <button type="button" class="remove-image-btn" (click)="removeAttachedImage(i)" aria-label="Remove image">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          </div>
+
+          <textarea 
+            [(ngModel)]="inputText"
+            (keydown.enter.ctrl)="sendMessage()"
+            (keydown.enter.meta)="sendMessage()"
+            placeholder="Ask me anything... (Ctrl+Enter to send)"
+            class="message-input"
+            [disabled]="(generating$ | async) || false">
+          </textarea>
+          <div class="input-footer">
+            <span class="char-count">{{ inputText.length }}</span>
+            <div class="input-actions">
+              <input #imageInput type="file" accept="image/*" multiple hidden (change)="onImagesSelected($event)" />
+              <button 
+                type="button"
+                class="action-btn attach" 
+                (click)="imageInput.click()"
+                aria-label="Attach image">
+                <span class="material-symbols-outlined">attach_file</span>
+              </button>
+              <button 
+                class="action-btn clear" 
+                (click)="inputText = ''"
+                *ngIf="inputText.length > 0"
+                aria-label="Clear input">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+              <button 
+                class="action-btn send" 
+                (click)="sendMessage()"
+                [disabled]="(!inputText.trim() && attachedImages.length === 0) || (generating$ | async)"
+                aria-label="Send message">
+                <span class="material-symbols-outlined">{{ (generating$ | async) ? 'stop_circle' : 'arrow_upward' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model info tooltip -->
+      <div class="input-footer-info">
+        <span class="model-tokens">{{ getModelContextInfo(currentModel) }}</span>
+      </div>
+    </div>
+  </main>
+</div>

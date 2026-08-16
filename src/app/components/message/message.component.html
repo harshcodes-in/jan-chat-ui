@@ -1,0 +1,87 @@
+<div class="message-wrapper" [class.user-message]="message.role === 'user'" [class.assistant-message]="message.role === 'assistant'">
+  <div class="message-header">
+    <span class="role-badge" [class.user]="message.role === 'user'" [class.assistant]="message.role === 'assistant'">
+      {{ message.role === 'user' ? 'You' : 'AI' }}
+    </span>
+    <span class="timestamp">{{ getFormattedTime() }}</span>
+    <div class="token-info" *ngIf="message.tokens">
+      <span class="tokens">{{ getTokensDisplay() }} tokens</span>
+    </div>
+  </div>
+
+  <div class="message-content" *ngIf="!showEditPanel" (click)="handleCopyClick($event)">
+    <div *ngIf="message.images && message.images.length > 0" class="message-images">
+      <img *ngFor="let image of message.images" [src]="image" alt="Uploaded attachment" class="message-image" />
+    </div>
+
+    <div *ngIf="message.reasoningContent" class="reasoning-block">
+      <button type="button" class="reasoning-toggle" (click)="showReasoning = !showReasoning" [attr.aria-expanded]="showReasoning">
+        <span class="material-symbols-outlined">psychology</span>
+        <span>Reasoning</span>
+        <span class="toggle-indicator">{{ showReasoning ? '−' : '+' }}</span>
+      </button>
+
+      <div *ngIf="showReasoning" class="reasoning-body">
+        <div *ngIf="markdownService.isMarkdownContent(message.reasoningContent)" class="markdown-content reasoning-content" [innerHTML]="markdownService.parseMarkdownSync(message.reasoningContent)"></div>
+        <div *ngIf="!markdownService.isMarkdownContent(message.reasoningContent)" class="plain-text reasoning-content">{{ message.reasoningContent }}</div>
+      </div>
+    </div>
+
+    <div *ngIf="isMarkdown()" class="markdown-content" [innerHTML]="parseMarkdown()"></div>
+    <div *ngIf="!isMarkdown()" class="plain-text">{{ message.content }}</div>
+  </div>
+
+  <!-- Edit panel -->
+  <div *ngIf="showEditPanel" class="edit-panel">
+    <textarea 
+      [(ngModel)]="editedContent" 
+      class="edit-textarea"
+      placeholder="Edit message..."></textarea>
+    <div class="edit-actions">
+      <button (click)="saveEdit()" class="save-btn">Save</button>
+      <button (click)="cancelEdit()" class="cancel-btn">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Message actions -->
+  <div class="message-actions" *ngIf="!showEditPanel && message.role === 'assistant'">
+    <button 
+      class="action-btn regenerate" 
+      (click)="regenerate.emit()"
+      title="Regenerate response"
+      aria-label="Regenerate response">
+      <span class="material-symbols-outlined">autorenew</span>
+    </button>
+    <button 
+      class="action-btn edit" 
+      (click)="startEdit()"
+      title="Edit message"
+      aria-label="Edit message">
+      <span class="material-symbols-outlined">edit</span>
+    </button>
+    <button 
+      class="action-btn delete" 
+      (click)="deleteMessage.emit()"
+      title="Delete message"
+      aria-label="Delete message">
+      <span class="material-symbols-outlined">delete</span>
+    </button>
+  </div>
+
+  <div class="message-actions" *ngIf="!showEditPanel && message.role === 'user'">
+    <button 
+      class="action-btn edit" 
+      (click)="startEdit()"
+      title="Edit message"
+      aria-label="Edit message">
+      <span class="material-symbols-outlined">edit</span>
+    </button>
+    <button 
+      class="action-btn delete" 
+      (click)="deleteMessage.emit()"
+      title="Delete message"
+      aria-label="Delete message">
+      <span class="material-symbols-outlined">delete</span>
+    </button>
+  </div>
+</div>

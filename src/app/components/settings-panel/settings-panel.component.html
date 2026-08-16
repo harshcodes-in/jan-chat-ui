@@ -1,0 +1,185 @@
+<div class="settings-panel">
+  <div class="settings-header">
+    <h2>Settings</h2>
+    <button class="close-panel-btn" type="button" (click)="closePanel()" aria-label="Close settings">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <div class="settings-content">
+    <!-- Appearance Section -->
+    <div class="settings-section">
+      <button 
+        class="section-header"
+        (click)="toggleSection('appearance')">
+        <span class="section-title"><span class="material-symbols-outlined section-icon">palette</span>Appearance</span>
+        <span class="section-toggle" [class.expanded]="expandedSections.appearance">›</span>
+      </button>
+
+      <div class="section-content" *ngIf="expandedSections.appearance">
+        <div class="setting-group">
+          <label>Theme</label>
+          <div class="theme-options">
+            <button 
+              class="theme-btn"
+              [class.active]="localSettings.theme === 'dark'"
+              (click)="updateSetting('theme', 'dark')">
+              <span class="material-symbols-outlined">dark_mode</span>
+              Dark
+            </button>
+            <button 
+              class="theme-btn"
+              [class.active]="localSettings.theme === 'light'"
+              (click)="updateSetting('theme', 'light')">
+              <span class="material-symbols-outlined">light_mode</span>
+              Light
+            </button>
+            <button 
+              class="theme-btn"
+              [class.active]="localSettings.theme === 'pink'"
+              (click)="updateSetting('theme', 'pink')">
+              <span class="material-symbols-outlined">favorite</span>
+              Pink
+            </button>
+            <button 
+              class="theme-btn"
+              [class.active]="localSettings.theme === 'pink2'"
+              (click)="updateSetting('theme', 'pink2')">
+              <span class="material-symbols-outlined">favorite</span>
+              Pink 2
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generation Section -->
+    <div class="settings-section">
+      <button 
+        class="section-header"
+        (click)="toggleSection('generation')">
+        <span class="section-title"><span class="material-symbols-outlined section-icon">tune</span>Generation</span>
+        <span class="section-toggle" [class.expanded]="expandedSections.generation">›</span>
+      </button>
+
+      <div class="section-content" *ngIf="expandedSections.generation">
+        <!-- Temperature -->
+        <div class="setting-group">
+          <div class="setting-label">
+            <label>Temperature</label>
+            <span class="setting-value">{{ localSettings.temperature.toFixed(2) }}</span>
+          </div>
+          <input 
+            type="range" 
+            min="0" 
+            max="2" 
+            step="0.01"
+            [value]="localSettings.temperature"
+            (change)="updateSetting('temperature', parseFloat($any($event.target).value))"
+            class="slider">
+          <div class="setting-hint">{{ getTemperatureLabel() }}</div>
+          <div class="setting-description">
+            Lower = more deterministic, Higher = more creative
+          </div>
+        </div>
+
+        <!-- Max Tokens -->
+        <div class="setting-group">
+          <div class="setting-label">
+            <label>Max Tokens</label>
+            <span class="setting-value">{{ localSettings.maxTokens }}</span>
+          </div>
+          <input 
+            type="range" 
+            min="100" 
+            max="8000" 
+            step="100"
+            [value]="localSettings.maxTokens"
+            (change)="updateSetting('maxTokens', parseInt($any($event.target).value))"
+            class="slider">
+          <div class="setting-description">
+            Maximum length of response
+          </div>
+        </div>
+
+        <!-- System Prompt -->
+        <div class="setting-group">
+          <label>System Prompt</label>
+          <textarea 
+            [(ngModel)]="localSettings.systemPrompt"
+            (ngModelChange)="updateSetting('systemPrompt', $event)"
+            class="textarea"
+            placeholder="You are a helpful AI assistant.">
+          </textarea>
+        </div>
+
+        <!-- Reasoning toggle -->
+        <div class="setting-group">
+          <div class="setting-label">
+            <label>Enable thinking</label>
+            <input
+              type="checkbox"
+              [(ngModel)]="localSettings.reasoningEnabled"
+              (ngModelChange)="updateSetting('reasoningEnabled', $event)"
+              class="checkbox">
+          </div>
+          <div class="setting-description">
+            Turn the model's internal reasoning on or off for this chat session.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Section -->
+    <div class="settings-section">
+      <button 
+        class="section-header"
+        (click)="toggleSection('advanced')">
+        <span class="section-title"><span class="material-symbols-outlined section-icon">settings_applications</span>Advanced</span>
+        <span class="section-toggle" [class.expanded]="expandedSections.advanced">›</span>
+      </button>
+
+      <div class="section-content" *ngIf="expandedSections.advanced">
+        <!-- API URL -->
+        <div class="setting-group">
+          <label>API URL</label>
+          <input 
+            type="text" 
+            [(ngModel)]="localSettings.apiUrl"
+            (ngModelChange)="updateSetting('apiUrl', $event)"
+            class="input">
+        </div>
+
+        <!-- LAN Mode -->
+        <div class="setting-group">
+          <div class="setting-label">
+            <label>LAN Mode</label>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="localSettings.lanMode"
+              (ngModelChange)="updateSetting('lanMode', $event)"
+              class="checkbox">
+          </div>
+          <div class="setting-description">
+            Access from other devices on your network
+          </div>
+          <div *ngIf="localSettings.lanMode" class="lan-url-box">
+            <span class="url-label">Share this URL:</span>
+            <div class="url-display">
+              <span class="url-text">{{ getLanModeUrl() }}</span>
+              <button class="copy-url-btn" (click)="copyLanUrl()">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Button -->
+    <div class="settings-footer">
+      <button class="reset-btn" (click)="resetSettings()">
+        <span class="material-symbols-outlined">refresh</span>
+        Reset to Defaults
+      </button>
+    </div>
+  </div>
+</div>
