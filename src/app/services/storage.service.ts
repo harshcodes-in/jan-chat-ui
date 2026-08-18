@@ -17,6 +17,7 @@ export interface AppSettings {
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
+  promptTitle:string;
   apiUrl: string;
   lanMode: boolean;
   selectedModelId: string;
@@ -36,6 +37,7 @@ export class StorageService {
     temperature: 0.7,
     maxTokens: 2000,
     systemPrompt: 'You are a helpful AI assistant.',
+    promptTitle: 'General Assistant',
     apiUrl: '/api',
     lanMode: false,
     selectedModelId: '',

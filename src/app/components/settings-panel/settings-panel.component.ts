@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { AppSettings } from '../../services/storage.service';
+import { AppSettings, StorageService } from '../../services/storage.service';
+import { SavedPromptsService, SavedPrompt } from '../../services/saved-prompts.service';
 
 @Component({
   selector: 'app-settings-panel',
@@ -15,11 +16,17 @@ export class SettingsPanelComponent implements OnInit {
   expandedSections = {
     generation: false,
     appearance: false,
-    advanced: false
+    advanced: false,
+    savedPrompts: false
   };
+
+  savedPrompts: SavedPrompt[] = [];
+
+  constructor(private savedPromptsService: SavedPromptsService) {}
 
   ngOnInit(): void {
     this.localSettings = { ...this.settings };
+    this.savedPrompts = this.savedPromptsService.getSavedPrompts();
   }
 
   updateSetting<K extends keyof AppSettings>(key: K, value: AppSettings[K]): void {
@@ -27,8 +34,46 @@ export class SettingsPanelComponent implements OnInit {
     this.settingsChange.emit(this.localSettings);
   }
 
-  toggleSection(section: 'generation' | 'appearance' | 'advanced'): void {
+  toggleSection(section: 'generation' | 'appearance' | 'advanced' | 'savedPrompts'): void {
     this.expandedSections[section] = !this.expandedSections[section];
+  }
+
+  savePrompt(): void {
+    const prompt = this.localSettings.systemPrompt.trim();
+    if (!prompt) {
+      alert('Please enter a system prompt to save.');
+      return;
+    }
+
+    var promptTitle = this.localSettings.promptTitle.trim();
+    if (!promptTitle) {
+      promptTitle = "Custom"
+    }
+
+    const newPrompt: any = {
+      id: Date.now().toString(),
+      name: promptTitle,
+      prompt,
+      createdAt: Date.now()
+    };
+
+    this.savedPromptsService.savePrompt(newPrompt);
+    this.savedPrompts = this.savedPromptsService.getSavedPrompts();
+    this.toggleSection('savedPrompts');
+  }
+
+  deletePrompt(id: string): void {
+    if (confirm('Delete this saved prompt?')) {
+      this.savedPromptsService.deletePrompt(id);
+      this.savedPrompts = this.savedPromptsService.getSavedPrompts();
+    }
+  }
+
+  clearAllSavedPrompts(): void {
+    if (confirm('Delete all saved prompts? This cannot be undone.')) {
+      this.savedPromptsService.clearAll();
+      this.savedPrompts = this.savedPromptsService.getSavedPrompts();
+    }
   }
 
   getLanModeUrl(): string {
@@ -51,6 +96,7 @@ export class SettingsPanelComponent implements OnInit {
         temperature: 0.7,
         maxTokens: 2000,
         systemPrompt: 'You are a helpful AI assistant.',
+        promptTitle: 'General Assistant',
         apiUrl: '/api',
         lanMode: false,
         selectedModelId: '',
@@ -63,6 +109,20 @@ export class SettingsPanelComponent implements OnInit {
 
   closePanel(): void {
     this.closeSettings.emit();
+  }
+
+  formatDate(timestamp: number): string {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    return date.toLocaleDateString();
   }
 
   getTemperatureLabel(): string {
@@ -78,5 +138,21 @@ export class SettingsPanelComponent implements OnInit {
 
   parseInt(value: string): number {
     return parseInt(value, 10);
+  }
+
+  selectPrompt(promptText:string):void{
+    if (!promptText) return;
+    
+    const prompt = this.savedPrompts.find(p => p.prompt === promptText);
+    if (prompt) {
+      this.selectSavedPrompt(prompt);
+    }
+  }
+
+  selectSavedPrompt(prompt: SavedPrompt): void {
+    this.localSettings = { ...this.localSettings, systemPrompt: prompt.prompt, promptTitle:prompt.name };
+    this.settingsChange.emit(this.localSettings)
+    this.savedPrompts = this.savedPromptsService.getSavedPrompts();
+    this.toggleSection('savedPrompts');
   }
 }

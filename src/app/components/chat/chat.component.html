@@ -65,6 +65,24 @@
             {{ currentModel.ctx_len ? currentModel.ctx_len + ' ctx' : '' }}
           </span>
         </div>
+        
+        <!-- System Prompt Selector -->
+        <div class="prompt-selector" *ngIf="savedPrompts.length > 0">
+          <select 
+            [ngModel]="settings.systemPrompt" 
+            (ngModelChange)="onPromptSelect($event)" 
+            class="prompt-select"
+            aria-label="Select system prompt">
+            <option value="">Select a prompt...</option>
+            <option *ngFor="let prompt of savedPrompts" [value]="prompt.prompt">
+              {{ prompt.name }}
+            </option>
+          </select>
+          <span class="prompt-info" *ngIf="settings.systemPrompt">
+            <span class="material-symbols-outlined">bookmark</span>
+            {{ getSelectedPromptName() }}
+          </span>
+        </div>
       </div>
 
       <div class="header-right">

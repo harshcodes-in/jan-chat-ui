@@ -351,6 +351,11 @@
   color: #b91c1c;
 }
 
+.action-btn.copy:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #1e40af;
+}
+
 .edit-panel {
   display: flex;
   flex-direction: column;

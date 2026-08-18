@@ -105,12 +105,19 @@
         <!-- System Prompt -->
         <div class="setting-group">
           <label>System Prompt</label>
+          <input type="text" class="textarea" placeholder="Prompt title" [(ngModel)]="localSettings.promptTitle"
+            (ngModelChange)="updateSetting('promptTitle', $event)"
+            style="min-height: auto !important; margin-bottom: 8px;" />
           <textarea 
             [(ngModel)]="localSettings.systemPrompt"
             (ngModelChange)="updateSetting('systemPrompt', $event)"
             class="textarea"
             placeholder="You are a helpful AI assistant.">
           </textarea>
+            <button class="save-prompt-btn generic-btn btn-sm" (click)="savePrompt()" aria-label="Save current prompt">
+            <span class="material-symbols-outlined">add</span>
+            <span>Save Prompt</span>
+          </button>
         </div>
 
         <!-- Reasoning toggle -->
@@ -174,12 +181,57 @@
       </div>
     </div>
 
-    <!-- Reset Button -->
-    <div class="settings-footer">
-      <button class="reset-btn" (click)="resetSettings()">
-        <span class="material-symbols-outlined">refresh</span>
-        Reset to Defaults
-      </button>
+    <!-- Saved Prompts Section -->
+        <div class="settings-section">
+          <button 
+            class="section-header"
+            (click)="toggleSection('savedPrompts')">
+            <span class="section-title"><span class="material-symbols-outlined section-icon">bookmarks</span>Saved Prompts</span>
+            <span class="section-toggle" [class.expanded]="expandedSections.savedPrompts">›</span>
+          </button>
+
+          <div class="section-content" *ngIf="expandedSections.savedPrompts">
+
+            <div class="saved-prompts-list" *ngIf="savedPrompts.length > 0">
+              <div 
+                class="saved-prompt-item" 
+                *ngFor="let prompt of savedPrompts" (click)="selectPrompt(prompt.prompt)">
+                <div class="prompt-info" style="display: flex; align-items: center; justify-content: space-between;">
+                  <div >
+                    <span class="prompt-name">{{ prompt.name }}</span>
+                    <br>
+                    <span class="prompt-date">{{ formatDate(prompt.createdAt) }}</span>
+                  </div>
+                  <button style="width: fit-content;" class="delete-prompt-btn generic-btn btn-sm" (click)="deletePrompt(prompt.id)" aria-label="Delete prompt">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                  
+                </div>
+                <div class="prompt-preview">{{ prompt.prompt.substring(0, 150) }}{{ prompt.prompt.length > 150 ? '...' : '' }}</div>
+              </div>
+            </div>
+
+            <div *ngIf="savedPrompts.length === 0" class="empty-state">
+              <span class="material-symbols-outlined empty-icon">favorite_border</span>
+              <p>No saved prompts yet.</p>
+              <p>Use the "Save Prompt" button to save your current system prompt.</p>
+            </div>
+
+            <div class="saved-prompts-header">
+              <button class="clear-prompts-btn generic-btn btn-sm" (click)="clearAllSavedPrompts()" *ngIf="savedPrompts.length > 0" aria-label="Clear all saved prompts">
+                <span class="material-symbols-outlined">delete</span>
+                <span>Clear All</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reset Button -->
+        <div class="settings-footer">
+          <button class="reset-btn" (click)="resetSettings()">
+            <span class="material-symbols-outlined">refresh</span>
+            Reset to Defaults
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>

@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, OnDestroy } from '@angular/core';
 import { ChatService, Message, Model, RequestStatus, ConnectionStatus } from '../../services/chat.service';
 import { StorageService, ConversationState, AppSettings } from '../../services/storage.service';
+import { SavedPromptsService, SavedPrompt } from '../../services/saved-prompts.service';
 
 @Component({
   selector: 'app-chat',
@@ -29,6 +30,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   conversations: ConversationState[] = [];
   currentConversationId: string | null = null;
 
+  // Saved prompts
+  savedPrompts: SavedPrompt[] = [];
+
   shouldScroll = true;
   private hasInitializedView = false;
   private statusPoller?: number;
@@ -37,6 +41,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   constructor(
     private chatService: ChatService,
     private storageService: StorageService,
+    private savedPromptsService: SavedPromptsService,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef
   ) {
@@ -54,6 +59,9 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.selectedModelId = this.settings.selectedModelId || '';
     this.chatService.setApiUrl(this.settings.apiUrl);
     this.applyTheme(this.settings.theme);
+
+    // Load saved prompts
+    this.savedPrompts = this.savedPromptsService.getSavedPrompts();
 
     // Subscribe to messages
     this.messages$.subscribe(messages => {
@@ -301,6 +309,13 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     }
   }
 
+  selectSavedPrompt(prompt: SavedPrompt): void {
+    this.settings = { ...this.settings, systemPrompt: prompt.prompt, promptTitle:prompt.name };
+    this.storageService.saveSettings(this.settings);
+    this.savedPrompts = this.savedPromptsService.getSavedPrompts();
+    this.cdr.markForCheck();
+  }
+
   onModelChange(modelId: string): void {
     const model = this.models.find(item => item.id === modelId) || null;
     this.applySelectedModel(model);
@@ -433,6 +448,20 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     const outputValue = model.max_tokens ?? model.max_output_tokens ?? 'N/A';
 
     return `Context: ${contextValue === 'N/A' ? 'N/A' : `${contextValue} tokens`} | Max output: ${outputValue === 'N/A' ? 'N/A' : `${outputValue} tokens`}`;
+  }
+
+  onPromptSelect(promptText: string): void {
+    if (!promptText) return;
+    
+    const prompt = this.savedPrompts.find(p => p.prompt === promptText);
+    if (prompt) {
+      this.selectSavedPrompt(prompt);
+    }
+  }
+
+  getSelectedPromptName(): string {
+    const prompt = this.savedPrompts.find(p => p.prompt === this.settings.systemPrompt);
+    return prompt ? prompt.name : 'Custom';
   }
 
   copyMessage(index: number): void {

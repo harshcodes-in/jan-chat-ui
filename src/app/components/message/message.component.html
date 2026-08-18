@@ -60,6 +60,13 @@
       <span class="material-symbols-outlined">edit</span>
     </button>
     <button 
+      class="action-btn copy" 
+      (click)="copyMessage()"
+      title="Copy message"
+      aria-label="Copy message">
+      <span class="material-symbols-outlined">content_copy</span>
+    </button>
+    <button 
       class="action-btn delete" 
       (click)="deleteMessage.emit()"
       title="Delete message"
@@ -75,6 +82,13 @@
       title="Edit message"
       aria-label="Edit message">
       <span class="material-symbols-outlined">edit</span>
+    </button>
+    <button 
+      class="action-btn copy" 
+      (click)="copyMessage()"
+      title="Copy message"
+      aria-label="Copy message">
+      <span class="material-symbols-outlined">content_copy</span>
     </button>
     <button 
       class="action-btn delete" 

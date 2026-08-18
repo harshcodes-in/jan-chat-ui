@@ -85,6 +85,16 @@ export class MessageComponent {
     this.editedContent = '';
   }
 
+  copyMessage(): void {
+    const contentToCopy = this.message.content;
+    navigator.clipboard.writeText(contentToCopy).then(() => {
+      // Could add a toast notification here if needed
+      console.log('Message copied to clipboard');
+    }).catch(err => {
+      console.error('Failed to copy message:', err);
+    });
+  }
+
   getFormattedTime(): string {
     const date = new Date(this.message.timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
