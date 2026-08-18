@@ -68,7 +68,7 @@
         
         <!-- System Prompt Selector -->
         <div class="prompt-selector" *ngIf="savedPrompts.length > 0">
-          <select 
+          <!-- <select 
             [ngModel]="settings.systemPrompt" 
             (ngModelChange)="onPromptSelect($event)" 
             class="prompt-select"
@@ -77,7 +77,7 @@
             <option *ngFor="let prompt of savedPrompts" [value]="prompt.prompt">
               {{ prompt.name }}
             </option>
-          </select>
+          </select> -->
           <span class="prompt-info" *ngIf="settings.systemPrompt">
             <span class="material-symbols-outlined">bookmark</span>
             {{ getSelectedPromptName() }}
